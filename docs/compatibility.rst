@@ -21,7 +21,8 @@ combination that changes the output's shape, is parsed and linked by
 
 That gate covers **100% of the default output**. There is no emitted construct
 that CI cannot check -- including the ``--emit-reset-consts`` constants and the
-``--emit-top`` wrapper.
+``--emit-top`` wrapper. It is what this project guarantees: the *package* is
+always accepted, whatever the state of the consumer-side surface below.
 
 A second, separate suite parses the generated package *together with* consumer
 code exercising ``read``/``write``, ``read_val``/``write_val``,
@@ -29,6 +30,13 @@ code exercising ``read``/``write``, ``read_val``/``write_val``,
 matters: the first covers our artifact and must always pass, while the second
 exercises core-library surface we do not emit, so a gap there is information
 rather than a defect in the output.
+
+Two of those consumer patterns -- the ``reg_sized_c`` untyped accessors
+(``read_val``/``write_val``/``write_val_masked``) and ``write_field`` -- are
+currently ``xfail`` against a released parser. Both depend on ``reg_sized_c``,
+which is not yet in a published ``pssparser`` core library. Typed access
+(``read()``/``write()`` through the register's own struct) and handle binding
+work today, and are the forms :doc:`using-the-output` leads with.
 
 Optional modes awaiting tool support
 ------------------------------------

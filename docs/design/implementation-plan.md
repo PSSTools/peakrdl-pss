@@ -79,15 +79,40 @@ entirely; and `--emit-enums=off` was accepted and ignored.
 | options passed as kwargs | `options.py` with `ExportOptions` | one object threaded through all four stages; the parity test checks it against both surfaces |
 | §7.4 asserts the keyword table *equals* the parser's | asserts it is a *superset* of both the parser grammar and spec Table 3 | the two sources genuinely disagree (the parser has `mutable`/`pyimport`; the spec has `this`/`pre_body`); the union is strictly safer, and subset assertions still catch drift |
 
-### Parser status: better than §11 assumed
+### Parser status — and a measurement error worth recording
 
-The installed `pssparser` already provides `reg_base_c`/`reg_sized_c` (Tier 1.2),
-`node_s` (Tier 1.3), and the full Tier 3 consumer surface — `write_field`,
-`write_fields`, `write_val_masked`, `read_val`. The consumer suite therefore has
-**zero xfails**: all four consumer patterns parse and link today.
+An earlier draft of this record claimed the installed `pssparser` already provided
+Tier 1.2 (`reg_base_c`/`reg_sized_c`), Tier 1.3 (`node_s`) and the whole Tier 3
+consumer surface, and that the consumer suite had **zero xfails**. That was
+measured against the *local working tree* of `packages/pssparser`, which has ~20
+uncommitted modifications — including additions to `src/stdlib/addr_reg_pkg.pss`
+that introduce `reg_sized_c`, `write_val_masked`, `write_field`, `write_fields`
+and `node_s`. The `.so` files in that tree were built from those edits, not from
+committed HEAD.
 
-Net effect on §11: only Tier 1.1 (enum base type) still gates anything, and it
-gates one optional mode with a complete default. Tier 2 remains dropped.
+CI caught it immediately: building `pssparser` from committed `05e7057` gives
+**196 passed, 2 xfailed**. The two are `sized_access` and `write_field` — exactly
+the `reg_sized_c` members that exist only in the uncommitted tree.
+
+The lesson generalizes past this instance: *a dependency's working tree is not its
+released behavior*, and validating against a dirty sibling checkout silently
+overstates what consumers can do. CI building from a committed ref is what makes
+that distinction observable.
+
+Corrected status:
+
+| Tier | Committed `pssparser` HEAD | Gates |
+|---|---|---|
+| 1.1 — enum base type | absent | `--emit-enums=typed` (M6) |
+| 1.2 — `reg_sized_c`/`reg_base_c` | **absent** (uncommitted WIP) | the two consumer xfails |
+| 1.3 — `node_s` | **absent** (uncommitted WIP) | `--offset-mode=path` (M6) |
+| 3 — `write_field` etc. | **absent** (rides on 1.2) | the two consumer xfails |
+| 2 — mnemonics | n/a | nothing; dropped |
+
+What does *not* change: **every package this exporter generates parses and links
+against committed `pssparser` HEAD.** All 144 parser-gate cases pass. The gap is
+entirely consumer-side, which is exactly the split §7.5 was designed around — and
+the reason the two suites are kept separate rather than merged.
 
 ---
 
@@ -851,15 +876,16 @@ on the 1.0 path depends on the parser changing. Remaining relationship:
 | Parser item | Gates | Priority for us |
 |---|---|---|
 | Tier 1.1 — `enum` base type (the one grammar change) | `--emit-enums=typed` (M6) | Low. `--emit-enums=const` is the default and needs nothing. |
-| Tier 1.3 — `node_s` | `--offset-mode=path` (M6) | **Already present** in the installed parser. |
-| Tier 3 — `write_field`/`write_masked`/struct access | §7.5 consumer suite only | **Already present.** The consumer suite has zero xfails. |
-| Tier 1.2 — `reg_sized_c`/`reg_base_c` chain | Nothing we emit | **Already present.** |
+| Tier 1.3 — `node_s` | `--offset-mode=path` (M6) | Low. `instance` mode is the default. Present in the parser's working tree, not in a release. |
+| Tier 3 — `write_field`/`write_masked`/struct access | §7.5 consumer suite only | **Highest for us** — the two consumer xfails ride on it. Rides on Tier 1.2. |
+| Tier 1.2 — `reg_sized_c`/`reg_base_c` chain | the untyped consumer accessors | Present in the parser's working tree, not in a release; landing it clears both xfails. |
 | **Tier 2 — mnemonics, `use_symbolic_reg_names`, `format()`** | **Nothing** | **Dropped as a `peakrdl-pss` requirement.** Worth telling the parser project: the consumer that motivated Tier 2 no longer needs it, so it can be reprioritized on its own merits. |
 
-Recommended: Tier 1.1 is now the *only* outstanding parser item that gates anything
-here, and it gates one optional mode with a complete default — so nothing in this
-repo is waiting on the parser. De-prioritize Tier 2. Track as checkboxes, not
-milestones of this repo.
+Recommended: land Tier 1.2 + Tier 3 (they are one change — `reg_sized_c` and its
+members are already written, just uncommitted), which clears both consumer xfails.
+Treat Tier 1.1/1.3 as opportunistic; both gate optional modes with complete
+defaults. De-prioritize Tier 2. Nothing here blocks on any of it: the *package*
+gate is green against committed parser HEAD today.
 
 The parser doc (`docs/design/pssparser-3.1-requirements.md`) should get a short status note
 recording that its Tier 2 consumer went away — otherwise that work gets done on a stale
@@ -885,8 +911,9 @@ Two knock-on effects worth stating plainly, since they change the shape of the p
 rather than just its flag list:
 
 1. **v1 is a strictly smaller, fully-testable artifact.** Every construct it emits is inside
-   the subset `pssparser` validates today (§7.5), including the reset consts — verified
-   during this update. The design doc's one untestable feature is gone.
+   the subset `pssparser` validates today (§7.5), including the reset consts — verified in CI
+   against committed parser HEAD, not against a local working tree. The design doc's one
+   untestable feature is gone.
 2. **The generator now refuses rather than degrades.** Four constructs that the design doc
    would have emitted with warnings are now hard errors, which shifts effort from "emit
    something plausible" to "detect precisely and explain well." That makes `validate.py`

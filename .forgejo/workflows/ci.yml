@@ -165,7 +165,10 @@ jobs:
         /tmp/gate/bin/pip install -q -e ".[test]" peakrdl
         /tmp/gate/bin/pip install -q /tmp/pssparser/dist/*cp312*.whl
         /tmp/gate/bin/pssparser --help > /dev/null
-        /tmp/gate/bin/python -m pytest tests/golden -q -rs | tee /tmp/gate.log
+        # -rxX so an xfail names itself in the log. Consumer-side xfails are
+        # expected against a released parser and are not a gate failure; a
+        # failure in test_parse_package.py is, and is asserted below.
+        /tmp/gate/bin/python -m pytest tests/golden -q -rxX | tee /tmp/gate.log
 
     - name: The gate must have run, not skipped
       # The suite skips rather than fails when the parser is missing, so that it
@@ -177,3 +180,16 @@ jobs:
           exit 1
         fi
         echo "OK: the parser gate ran"
+
+    - name: Every generated package must parse
+      # The gate proper. Consumer-side xfails above are someone else's stdlib
+      # surface and are allowed to move; an xfail or failure *here* would mean
+      # we are shipping output no parser accepts, which is the one thing this
+      # job exists to prevent.
+      run: |
+        /tmp/gate/bin/python -m pytest tests/golden/test_parse_package.py \
+          -q -rxX --runxfail | tee /tmp/pkg.log
+        if grep -qE "xfail|xpass" /tmp/pkg.log; then
+          echo "::error::a generated package is not accepted by pssparser"
+          exit 1
+        fi
