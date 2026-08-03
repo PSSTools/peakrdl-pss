@@ -1,0 +1,14 @@
+// Targets: msb0 field ordering (PSS-W105). In msb0 mode a field's most
+// significant bit sits at its LOW register bit position, which implies a bit
+// swap within the field -- something packed_s cannot express. The emitted member
+// must still occupy the correct physical bit span; only the within-field order
+// is lost, and the export has to say so.
+addrmap msb0 {
+    msb0;
+    reg {
+        default sw=rw; default hw=r;
+        field {} a[0:7];      // msb at physical bit 0, lsb at physical bit 7
+        field {} b[8:15];
+        field {} c[16:31];
+    } r_msb0 @ 0x0;
+};

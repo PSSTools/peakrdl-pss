@@ -1,0 +1,5 @@
+{#
+    SZ is always emitted explicitly as regwidth rather than left to default, so
+    the struct's byte-rounded sizeof_s can never change the access size.
+#}
+    {{ "pure " if pure else "" }}component {{ rt.component_name }} : reg_c<{{ rt.struct_name }}, {{ rt.access }}, {{ rt.regwidth }}> {}

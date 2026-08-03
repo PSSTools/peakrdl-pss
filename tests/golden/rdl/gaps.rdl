@@ -1,0 +1,11 @@
+// Targets: leading, interior, and trailing gaps; --pad-tail on and off;
+//          --rsvd-prefix. Every gap must become an explicit packed_s member or
+//          every field above it silently shifts.
+addrmap gaps {
+    reg {
+        field {sw=rw; hw=r;} a[7:4];      // leading gap [3:0]
+        field {sw=rw; hw=r;} b[15:12];    // interior gap [11:8]
+        field {sw=rw; hw=r;} c[23:23];    // interior gap [22:16]
+                                          // trailing gap [31:24]
+    } r_gaps @ 0x0;
+};

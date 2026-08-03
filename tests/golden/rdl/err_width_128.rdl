@@ -1,0 +1,9 @@
+// Targets: PSS-E001. regwidth > 64 has no PSS access size. Note that such a
+// register *parses* cleanly if emitted -- which is exactly why this is an error
+// rather than a warning.
+addrmap err_width_128 {
+    reg {
+        regwidth = 128;
+        field {sw=rw; hw=r;} f[127:0];
+    } wide @ 0x0;
+};

@@ -1,0 +1,14 @@
+// Targets: 'encode' enumerations, shared between fields and inline.
+addrmap encode_regs {
+    enum mode_e {
+        off  = 2'd0 { desc = "disabled"; };
+        slow = 2'd1;
+        fast = 2'd2;
+    };
+
+    reg {
+        field {sw=rw; hw=r; encode = mode_e;} mode[1:0] = 0;
+        field {sw=rw; hw=r; encode = mode_e;} backup_mode[3:2] = 0;
+        field {sw=rw; hw=r;} plain[7:4];
+    } cfg @ 0x0;
+};

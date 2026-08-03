@@ -1,0 +1,21 @@
+// Targets: identifier mangling (PSS-I201). Every name here is either a PSS
+// keyword, an identifier imported from addr_reg_pkg, or an escaped SystemRDL
+// identifier. None may reach the output verbatim -- and none may be dropped.
+//
+// Note \component and \struct: those words are keywords in *both* languages, so
+// they can only appear in SystemRDL in escaped form. The escape is a SystemRDL
+// lexical device, not part of the name, so it must not survive to the output.
+addrmap keywords {
+    reg {
+        field {sw=rw; hw=r;} \component[3:0];  // keyword in both languages
+        field {sw=rw; hw=r;} action[7:4];      // PSS keyword only
+        field {sw=rw; hw=r;} \reg[11:8];       // escaped SystemRDL identifier
+        field {sw=rw; hw=r;} pool[15:12];      // PSS keyword only
+        field {sw=rw; hw=r;} reg_c[19:16];     // name imported from addr_reg_pkg
+        field {sw=rw; hw=r;} \struct[23:20];   // keyword in both languages
+    } state @ 0x0;                             // PSS keyword as an instance name
+
+    reg {
+        field {sw=rw; hw=r;} f[3:0];
+    } buffer @ 0x4;                            // PSS keyword as an instance name
+};

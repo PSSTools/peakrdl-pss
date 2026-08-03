@@ -1,0 +1,255 @@
+{
+  "version": 1,
+  "generator": "peakrdl-pss 0.1.0",
+  "package": "access_matrix",
+  "top": "access_matrix",
+  "registers": [
+    {
+      "type": "access_matrix__all_ro",
+      "instances": [
+        "access_matrix.all_ro"
+      ],
+      "regwidth": 32,
+      "accesswidth": 32,
+      "access": "READONLY",
+      "reset": null,
+      "signature": "f128300dc6080382",
+      "fields": [
+        {
+          "name": "a",
+          "rdl_name": "a",
+          "lsb": 0,
+          "msb": 7,
+          "reserved": false,
+          "sw": "r",
+          "hw": "w",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        },
+        {
+          "name": "b",
+          "rdl_name": "b",
+          "lsb": 8,
+          "msb": 15,
+          "reserved": false,
+          "sw": "r",
+          "hw": "w",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        }
+      ]
+    },
+    {
+      "type": "access_matrix__all_wo",
+      "instances": [
+        "access_matrix.all_wo"
+      ],
+      "regwidth": 32,
+      "accesswidth": 32,
+      "access": "WRITEONLY",
+      "reset": null,
+      "signature": "d45cdae0301e7e13",
+      "fields": [
+        {
+          "name": "a",
+          "rdl_name": "a",
+          "lsb": 0,
+          "msb": 7,
+          "reserved": false,
+          "sw": "w",
+          "hw": "r",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        },
+        {
+          "name": "b",
+          "rdl_name": "b",
+          "lsb": 8,
+          "msb": 15,
+          "reserved": false,
+          "sw": "w",
+          "hw": "r",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        }
+      ]
+    },
+    {
+      "type": "access_matrix__mixed",
+      "instances": [
+        "access_matrix.mixed"
+      ],
+      "regwidth": 32,
+      "accesswidth": 32,
+      "access": "READWRITE",
+      "reset": null,
+      "signature": "d781e3921525bd71",
+      "fields": [
+        {
+          "name": "a",
+          "rdl_name": "a",
+          "lsb": 0,
+          "msb": 7,
+          "reserved": false,
+          "sw": "r",
+          "hw": "w",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        },
+        {
+          "name": "b",
+          "rdl_name": "b",
+          "lsb": 8,
+          "msb": 15,
+          "reserved": false,
+          "sw": "w",
+          "hw": "r",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        }
+      ]
+    },
+    {
+      "type": "access_matrix__write_once",
+      "instances": [
+        "access_matrix.write_once"
+      ],
+      "regwidth": 32,
+      "accesswidth": 32,
+      "access": "READWRITE",
+      "reset": null,
+      "signature": "a54f313e8458daad",
+      "fields": [
+        {
+          "name": "a",
+          "rdl_name": "a",
+          "lsb": 0,
+          "msb": 7,
+          "reserved": false,
+          "sw": "rw1",
+          "hw": "r",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        },
+        {
+          "name": "b",
+          "rdl_name": "b",
+          "lsb": 8,
+          "msb": 15,
+          "reserved": false,
+          "sw": "w1",
+          "hw": "r",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": []
+        }
+      ]
+    },
+    {
+      "type": "access_matrix__side_effects",
+      "instances": [
+        "access_matrix.side_effects"
+      ],
+      "regwidth": 32,
+      "accesswidth": 32,
+      "access": "READWRITE",
+      "reset": 0,
+      "signature": "bceec3d078e0be5f",
+      "fields": [
+        {
+          "name": "a",
+          "rdl_name": "a",
+          "lsb": 0,
+          "msb": 7,
+          "reserved": false,
+          "sw": "rw",
+          "hw": "r",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": [
+            "onread=rclr"
+          ]
+        },
+        {
+          "name": "b",
+          "rdl_name": "b",
+          "lsb": 8,
+          "msb": 15,
+          "reserved": false,
+          "sw": "rw",
+          "hw": "r",
+          "reset": null,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": [
+            "onwrite=woclr"
+          ]
+        },
+        {
+          "name": "c",
+          "rdl_name": "c",
+          "lsb": 16,
+          "msb": 16,
+          "reserved": false,
+          "sw": "rw",
+          "hw": "r",
+          "reset": 0,
+          "reset_is_ref": false,
+          "encode": null,
+          "dropped": [
+            "singlepulse"
+          ]
+        }
+      ]
+    }
+  ],
+  "renamed": {},
+  "findings": [
+    {
+      "id": "PSS-W102",
+      "severity": "WARNING",
+      "path": "access_matrix.write_once.a",
+      "message": "field 'a' has sw=rw1; PSS reg_access cannot express write-once"
+    },
+    {
+      "id": "PSS-W102",
+      "severity": "WARNING",
+      "path": "access_matrix.write_once.b",
+      "message": "field 'b' has sw=w1; PSS reg_access cannot express write-once"
+    },
+    {
+      "id": "PSS-W101",
+      "severity": "WARNING",
+      "path": "access_matrix.side_effects.a",
+      "message": "field 'a' has behavior with no PSS equivalent: onread=rclr"
+    },
+    {
+      "id": "PSS-W101",
+      "severity": "WARNING",
+      "path": "access_matrix.side_effects.b",
+      "message": "field 'b' has behavior with no PSS equivalent: onwrite=woclr"
+    },
+    {
+      "id": "PSS-W101",
+      "severity": "WARNING",
+      "path": "access_matrix.side_effects.c",
+      "message": "field 'c' has behavior with no PSS equivalent: singlepulse"
+    }
+  ]
+}

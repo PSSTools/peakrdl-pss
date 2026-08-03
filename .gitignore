@@ -150,7 +150,6 @@ activemq-data/
 
 # Environments
 .env
-.envrc
 .venv
 env/
 venv/
@@ -216,3 +215,19 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+
+# IVPM-managed dependencies. Fetched by `ivpm update`, never committed.
+/packages/
+
+# Sphinx build output
+docs/_build/
+
+# The PSS specification draft is an Accellera document, not ours to
+# redistribute -- and this repository is published publicly. Keep a local copy
+# if you need one; do not commit it.
+PSS*Draft*.md
+
+# Editor / agent scratch
+/.claude/
+/.cursor/
+/.agents/

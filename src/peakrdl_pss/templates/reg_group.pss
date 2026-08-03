@@ -1,0 +1,57 @@
+{#
+    One addrmap/regfile.  Both offset functions are always emitted, even when
+    empty: PSS requires get_offset_of_instance and get_offset_of_instance_array
+    to be implemented as a pair, and implementing all three of the
+    get_offset_of_* functions in one group is an error -- which is why
+    get_offset_of_path is never emitted in the default 'instance' mode.
+
+    The match keys are the *emitted* instance names, not the SystemRDL names:
+    they are what a PSS tool looks up when resolving an instance.
+#}
+{% import "utils.pss" as u %}
+{% set helpers = index_helpers(gt) %}
+    // {{ gt.friendly }}{% if gt.instances|length > 1 %} (+{{ gt.instances|length - 1 }} more){% endif %}
+
+    {{ "pure " if pure else "" }}component {{ gt.component_name }} : reg_group_c {
+{% for c in gt.children %}
+{% if c.is_array %}
+        {{ c.component_name }} {{ c.inst_name }}[{{ c.flat_count }}];{% if c.dims|length > 1 %}{{ ' ' }}// {{ c.rdl_name }}{% for d in c.dims %}[{{ d }}]{% endfor %} flattened row-major{% endif %}
+
+{% else %}
+        {{ c.component_name }} {{ c.inst_name }};
+{% endif %}
+{% endfor %}
+{% if gt.reset_consts %}
+
+{% for name, width, value in gt.reset_consts %}
+        static const bit[{{ width }}] {{ name }} = {{ u.hex(value) }};
+{% endfor %}
+{% endif %}
+{% if helpers %}
+
+{% for c, sig, body in helpers %}
+        // {{ c.rdl_name }}{% for d in c.dims %}[{{ d }}]{% endfor %} -> flat index
+        pure static function int {{ c.inst_name }}_index({{ sig }}) {
+            return {{ body }};
+        }
+{% endfor %}
+{% endif %}
+
+        pure function bit[64] get_offset_of_instance(string name) {
+            match (name) {
+{% for c in gt.scalar_children %}
+                ["{{ c.inst_name }}"]: return {{ u.hex(c.offset) }};
+{% endfor %}
+                default: return -1;
+            }
+        }
+
+        pure function bit[64] get_offset_of_instance_array(string name, int index) {
+            match (name) {
+{% for c in gt.array_children %}
+                ["{{ c.inst_name }}"]: return {{ u.hex(c.offset) }} + index*{{ u.hex(c.stride) }};
+{% endfor %}
+                default: return -1;
+            }
+        }
+    }

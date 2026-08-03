@@ -1,0 +1,11 @@
+{#
+    --emit-enums=const (the default).  A typed PSS enum would be the natural
+    mapping, but a packed-struct member needs an enum with an explicit base type,
+    which pssparser does not accept today; --emit-enums=typed covers that once it
+    does.  Constants carry the same information and always parse.
+#}
+{% import "utils.pss" as u %}
+    // encoding {{ et.rdl_name }}
+{% for m in et.members %}
+    static const bit[{{ et.width }}] {{ et.name }}__{{ m.name }} = {{ u.hex(m.value) }};
+{% endfor %}

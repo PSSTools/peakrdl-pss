@@ -1,0 +1,9 @@
+// Targets: PSS-E002. A register needing two bus accesses cannot be a reg_c,
+// which models one access of the full width.
+addrmap err_accesswidth {
+    reg {
+        regwidth = 64;
+        accesswidth = 32;
+        field {sw=rw; hw=r;} f[63:0];
+    } split @ 0x0;
+};

@@ -1,0 +1,7 @@
+// Targets: the minimal readable baseline -- one register, one field, no gaps.
+// If this golden is hard to read, the emitted format needs work.
+addrmap scalar_regs {
+    reg {
+        field {sw=rw; hw=r;} data[31:0] = 0;
+    } ctrl @ 0x0;
+};

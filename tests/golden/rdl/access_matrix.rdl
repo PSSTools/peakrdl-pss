@@ -1,0 +1,30 @@
+// Targets: reg_access derivation and the lossiness notes. Each register pins one
+// row of the derivation table; the rw1/w1 and onread/onwrite registers pin the
+// approximation warnings (PSS-W101/W102).
+addrmap access_matrix {
+    reg {
+        field {sw=r;  hw=w;} a[7:0];
+        field {sw=r;  hw=w;} b[15:8];
+    } all_ro @ 0x0;
+
+    reg {
+        field {sw=w;  hw=r;} a[7:0];
+        field {sw=w;  hw=r;} b[15:8];
+    } all_wo @ 0x4;
+
+    reg {
+        field {sw=r;  hw=w;} a[7:0];
+        field {sw=w;  hw=r;} b[15:8];
+    } mixed @ 0x8;
+
+    reg {
+        field {sw=rw1; hw=r;} a[7:0];
+        field {sw=w1;  hw=r;} b[15:8];
+    } write_once @ 0x10;
+
+    reg {
+        field {sw=rw; hw=r; onread=rclr;}    a[7:0];
+        field {sw=rw; hw=r; onwrite=woclr;}  b[15:8];
+        field {sw=rw; hw=r; singlepulse;}    c[16:16] = 0;
+    } side_effects @ 0x14;
+};

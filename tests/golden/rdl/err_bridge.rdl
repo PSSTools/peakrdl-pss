@@ -1,0 +1,18 @@
+// Targets: PSS-E003. A bridge introduces a second address space; the generated
+// package models exactly one. SystemRDL requires 'bridge' on the root addrmap
+// with two or more sub-addrmaps, so the whole design is the failing case.
+addrmap err_bridge {
+    bridge;
+
+    addrmap {
+        reg {
+            field {sw=rw; hw=r;} f[31:0];
+        } reg0 @ 0x0;
+    } side_a @ 0x0;
+
+    addrmap {
+        reg {
+            field {sw=rw; hw=r;} f[31:0];
+        } reg0 @ 0x0;
+    } side_b @ 0x1000;
+};

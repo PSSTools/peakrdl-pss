@@ -1,0 +1,17 @@
+{#
+    The register value struct.  Members are ascending by lsb and contiguous:
+    packed_s assigns bits in declaration order and cannot skip, so every gap in
+    the SystemRDL layout is an explicit reserved member here.
+#}
+{% import "utils.pss" as u %}
+    // {{ rt.friendly }}{% if rt.instances|length > 1 %} (+{{ rt.instances|length - 1 }} more){% endif %}
+
+{% if rt.is_msb0 %}
+    // msb0 register: spans below are physical, but each field's bits are
+    // reversed relative to this struct -- see PSS-W105
+{% endif %}
+    struct {{ rt.struct_name }} : packed_s<LITTLE_ENDIAN> {
+{% for row in rt.fields %}
+        {{ u.bit_decl(row.width) }} {{ row.name }};{{ ' ' }}// {{ u.field_comment(row) }}
+{% endfor %}
+    }

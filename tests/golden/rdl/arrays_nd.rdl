@@ -1,0 +1,11 @@
+// Targets: N-D -> 1-D row-major flattening and the index helper. bar[2][1]
+// must land at flat index 2*3+1 = 7 for dims [4][3].
+addrmap arrays_nd {
+    regfile rf_t {
+        reg {
+            field {sw=rw; hw=r;} f[31:0] = 0;
+        } reg0 @ 0x0;
+    };
+    rf_t two_d[4][3]    @ 0x1000 += 0x100;
+    rf_t three_d[4][3][2] @ 0x8000 += 0x40;
+};

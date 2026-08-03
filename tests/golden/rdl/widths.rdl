@@ -1,0 +1,8 @@
+// Targets: the four legal register widths. SZ is emitted explicitly for each, so
+// a change in packed_s byte rounding cannot change the access size.
+addrmap widths {
+    reg { regwidth = 8;  field {sw=rw; hw=r;} f[7:0];  } r8  @ 0x0;
+    reg { regwidth = 16; field {sw=rw; hw=r;} f[15:0]; } r16 @ 0x2;
+    reg { regwidth = 32; field {sw=rw; hw=r;} f[31:0]; } r32 @ 0x4;
+    reg { regwidth = 64; field {sw=rw; hw=r;} f[63:0]; } r64 @ 0x8;
+};

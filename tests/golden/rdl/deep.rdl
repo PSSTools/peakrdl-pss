@@ -1,0 +1,28 @@
+// Targets: a 4-level hierarchy with repeated subtrees -- exercises post-order
+// interning, signature propagation through nesting, and offset accumulation
+// down a long path.
+addrmap deep {
+    regfile leaf_t {
+        reg r_t {
+            field {sw=rw; hw=r;} f[31:0] = 0;
+        };
+        r_t a @ 0x0;
+        r_t b @ 0x4;
+        r_t c[4] @ 0x8 += 0x4;
+    };
+
+    regfile mid_t {
+        leaf_t l0 @ 0x00;
+        leaf_t l1 @ 0x20;
+        leaf_t l2[3] @ 0x40 += 0x20;
+    };
+
+    addrmap block_t {
+        mid_t m0 @ 0x000;
+        mid_t m1[2] @ 0x200 += 0x100;
+    };
+
+    block_t blk0 @ 0x0000;
+    block_t blk1 @ 0x1000;
+    block_t blks[4] @ 0x4000 += 0x1000;
+};

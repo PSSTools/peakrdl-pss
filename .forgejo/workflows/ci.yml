@@ -1,0 +1,179 @@
+# CI for psstools/peakrdl-pss on Forgejo Actions.
+#
+# Linux x86_64 only, matching the rest of psstools.
+#
+# Three things differ from the GitHub workflow this mirrors, and all three are
+# deliberate:
+#
+#  1. No third-party actions. A bare `uses:` resolves against code.forgejo.org
+#     (Forgejo's DEFAULT_ACTIONS_URL), not github.com.
+#  2. Dependencies come from PyPI, not from a source checkout. peakrdl-pss is
+#     pure Python and its dependencies are all published, so nothing here needs
+#     ivpm, a token, or GitHub.
+#  3. The pssparser gate is a separate job. It has to build the parser from
+#     source -- see the comment on that job for why the published wheel cannot
+#     be used -- and that must not delay the fast feedback from lint and tests.
+name: CI
+
+on:
+  - push
+  - pull_request
+  - workflow_dispatch
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      # Shared build image, reused as-is from psstools/pssparser: manylinux
+      # with every interpreter under /opt/python, plus node (act runs JS
+      # actions such as checkout *inside* the job container). Nothing in it is
+      # pssparser-specific. Built locally; the runner has force_pull: false.
+      image: dvkit/pssparser-ci:manylinux_2_28-x86_64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Check for internal identifiers in tracked files
+      # This repository is published to git.dvkit.org and mirrored to R2, so
+      # anything committed here is public. Internal host names, tailnet
+      # addresses and CGNAT-range IPs must not appear in tracked files -- if a
+      # build ever needs one, it belongs in a repository secret, which is
+      # masked in logs.
+      run: |
+        pattern='perch-char\.ts\.net|\.ts\.net|a9550|100\.(6[4-9]|[7-9][0-9]|1[01][0-9]|12[0-7])\.[0-9]+\.[0-9]+'
+        if git grep -nIE "$pattern" -- . ':!.forgejo/workflows/ci.yml' ; then
+          echo "::error::internal identifier found in a tracked file (see matches above)"
+          exit 1
+        fi
+        echo "OK: no internal identifiers in tracked files"
+
+    - name: Lint and type-check
+      # One interpreter is enough: ruff and mypy are configured for the 3.9
+      # floor regardless of which interpreter runs them.
+      run: |
+        P=/opt/python/cp312-cp312/bin/python
+        $P -m venv /tmp/lint
+        /tmp/lint/bin/pip install -q -e ".[dev,test]"
+        /tmp/lint/bin/ruff check src tests
+        /tmp/lint/bin/mypy
+
+    - name: Test across supported interpreters
+      # peakrdl and peakrdl-uvm come from PyPI rather than a source checkout:
+      # they are published packages, which keeps this job free of ivpm, of any
+      # credential, and of GitHub.
+      #
+      # The pssparser-marked tests skip here by design -- the parser-gate job
+      # below is what makes them a requirement. A skip must never be the only
+      # thing standing between us and a released regression, which is why that
+      # job asserts it actually ran.
+      run: |
+        set -e
+        for py in cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313; do
+          echo "=== $py ==="
+          /opt/python/${py}/bin/python -m venv /tmp/venv-${py}
+          /tmp/venv-${py}/bin/pip install -q -e ".[test]" peakrdl peakrdl-uvm
+          /tmp/venv-${py}/bin/python -m pytest -q -m "not slow" \
+            --cov=peakrdl_pss --cov-report=term-missing --cov-fail-under=85
+        done
+
+    - name: Benchmark
+      # Marked slow and excluded above, so run it once rather than five times.
+      run: /tmp/venv-cp313-cp313/bin/python -m pytest -q -m slow -s
+
+    - name: Build documentation
+      # -W: a warning here is a broken cross-reference or an undocumented
+      # diagnostic, both of which are defects in shipped documentation.
+      run: |
+        P=/opt/python/cp312-cp312/bin/python
+        $P -m venv /tmp/docsenv
+        /tmp/docsenv/bin/pip install -q -e . -r docs/requirements.txt
+        /tmp/docsenv/bin/python -m sphinx -b html -W --keep-going docs docs/_build/html
+        rm -rf docs/_build/html/.doctrees
+
+    - name: Upload documentation
+      uses: forgejo/upload-artifact@v4
+      with:
+        name: docs-html
+        path: docs/_build/html
+        if-no-files-found: error
+
+  parser-gate:
+    # The hard gate: every package this exporter generates must be accepted by
+    # pssparser. Nothing ships that a parser rejects.
+    #
+    # This builds pssparser from source rather than installing the wheel from
+    # PyPI, because the published wheel (3.0.0.28334693244) *segfaults* on
+    # output this exporter routinely generates -- two component-array instances
+    # in one reg_group_c is enough. See docs/design/implementation-plan.md.
+    # Installing it would turn the gate into a crash rather than a check.
+    #
+    # It is a separate job so a multi-minute native build never delays lint and
+    # test feedback.
+    runs-on: ubuntu-latest
+    container:
+      image: dvkit/pssparser-ci:manylinux_2_28-x86_64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Configure ivpm dependency resolution
+      # pssparser's own ivpm.yaml names github.com URLs for its build
+      # dependencies. Remap them to git.dvkit.org so this build does not depend
+      # on GitHub. git.dvkit.org serves anonymously, so the job stays
+      # credential-free -- including for pull requests from forks, which cannot
+      # be given secrets.
+      run: |
+        mkdir -p ~/.config/ivpm
+        cat > ~/.config/ivpm/config.yaml <<'EOF'
+        git-url-map:
+          - from: "https://github.com/mballance/"
+            to:   "https://git.dvkit.org/mballance-utils/"
+          - from: "https://github.com/mballance-utils/"
+            to:   "https://git.dvkit.org/mballance-utils/"
+          - from: "https://github.com/psstools/"
+            to:   "https://git.dvkit.org/psstools/"
+          - from: "https://github.com/fvutils/"
+            to:   "https://git.dvkit.org/fvutils/"
+        git-auth:
+          - host: "git.dvkit.org"
+            order: ["https"]
+        EOF
+
+    - name: Build pssparser from source
+      run: |
+        set -e
+        P=/opt/python/cp312-cp312/bin/python
+        git clone https://git.dvkit.org/psstools/pssparser.git /tmp/pssparser
+        cd /tmp/pssparser
+        echo "pssparser at $(git rev-parse --short HEAD)"
+        $P -m pip install -q ivpm
+        IVPM_PYTHON=$P $P -m ivpm update -j 1 -a
+        if grep -rl 'github\.com' packages/*/.git/config 2>/dev/null | grep -q .; then
+          echo "::error::a dependency resolved to github.com; the ivpm url-map did not apply"
+          exit 1
+        fi
+        export PATH=/opt/python/cp312-cp312/bin:$PATH
+        mkdir -p build && cd build && cmake .. -GNinja && ninja
+        cd /tmp/pssparser && $P -m build --wheel --no-isolation
+        ls -la dist/
+
+    - name: Run the gate
+      run: |
+        set -e
+        P=/opt/python/cp312-cp312/bin/python
+        $P -m venv /tmp/gate
+        /tmp/gate/bin/pip install -q -e ".[test]" peakrdl
+        /tmp/gate/bin/pip install -q /tmp/pssparser/dist/*cp312*.whl
+        /tmp/gate/bin/pssparser --help > /dev/null
+        /tmp/gate/bin/python -m pytest tests/golden -q -rs | tee /tmp/gate.log
+
+    - name: The gate must have run, not skipped
+      # The suite skips rather than fails when the parser is missing, so that it
+      # stays usable outside this environment. Here the parser is required, and
+      # a silent skip would turn the gate green while checking nothing.
+      run: |
+        if grep -q "pssparser CLI not found" /tmp/gate.log; then
+          echo "::error::the parser gate skipped -- pssparser was not on PATH"
+          exit 1
+        fi
+        echo "OK: the parser gate ran"

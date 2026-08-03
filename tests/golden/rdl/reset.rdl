@@ -1,0 +1,18 @@
+// Targets: --emit-reset-consts. Covers literal, absent, and array resets, plus
+// the naming hazard: a register literally named 'ctrl_reset' sitting beside
+// 'ctrl', whose generated constant would otherwise be named the same thing.
+addrmap reset {
+    reg r_t {
+        field {sw=rw; hw=r;} f[15:0] = 0x1234;
+        field {sw=rw; hw=r;} g[31:16] = 0x5678;
+    };
+
+    reg no_reset_t {
+        field {sw=rw; hw=r;} f[31:0];   // no reset specified -- must emit no const
+    };
+
+    r_t        ctrl        @ 0x0;
+    r_t        ctrl_reset  @ 0x4;       // collides with ctrl's generated const name
+    no_reset_t status      @ 0x8;
+    r_t        bank[4]     @ 0x10 += 0x4;
+};

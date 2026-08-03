@@ -1,0 +1,10 @@
+// Targets: dense and sparse 1-D arrays. A sparse array (stride > element size)
+// must not be confused with a dense one -- the stride, not the size, drives the
+// emitted offset expression.
+addrmap arrays_1d {
+    reg r_t {
+        field {sw=rw; hw=r;} f[31:0] = 0;
+    };
+    r_t dense[8]  @ 0x0   += 0x4;
+    r_t sparse[4] @ 0x100 += 0x20;
+};

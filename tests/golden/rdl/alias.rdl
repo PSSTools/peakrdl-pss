@@ -1,0 +1,14 @@
+// Targets: alias registers (PSS-I203). 'shadow' accesses the same storage as
+// 'primary' through a second address. PSS has no way to say that, so the two are
+// emitted as independent registers at their own offsets and the export reports
+// what it dropped rather than staying silent.
+addrmap alias_regs {
+    reg r_t {
+        field {sw=rw; hw=r;} f[31:0] = 0;
+    };
+    reg shadow_t {
+        field {sw=r;  hw=r;} f[31:0] = 0;
+    };
+    r_t                    primary @ 0x0;
+    alias primary shadow_t shadow  @ 0x4;
+};

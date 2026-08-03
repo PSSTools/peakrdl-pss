@@ -1,0 +1,22 @@
+// Targets: multi-error reporting. Three distinct problems in one design must all
+// be reported in a single run -- the export aborts after the full scan, not at
+// the first error, so a user fixing them does not need three round trips.
+//
+// Expected: PSS-E001 (too_wide), PSS-E002 (split), PSS-E004 (m), no output file.
+addrmap err_multi {
+    reg {
+        regwidth = 128;
+        field {sw=rw; hw=r;} f[127:0];
+    } too_wide @ 0x0;
+
+    reg {
+        regwidth = 64;
+        accesswidth = 32;
+        field {sw=rw; hw=r;} f[63:0];
+    } split @ 0x20;
+
+    external mem {
+        mementries = 0x10;
+        memwidth = 32;
+    } m @ 0x1000;
+};

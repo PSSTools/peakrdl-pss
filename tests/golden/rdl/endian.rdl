@@ -1,0 +1,13 @@
+// Targets: PSS-W104. The generated packed structs are LITTLE_ENDIAN throughout;
+// a bigendian subtree is a documented approximation, not a silent one.
+addrmap endian {
+    littleendian;
+    reg r_t {
+        field {sw=rw; hw=r;} f[31:0] = 0;
+    };
+    r_t le @ 0x0;
+    addrmap {
+        bigendian;
+        r_t be @ 0x0;
+    } be_block @ 0x10;
+};

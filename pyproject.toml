@@ -1,0 +1,91 @@
+[build-system]
+requires = ["setuptools >= 64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "peakrdl-pss"
+dynamic = ["version"]
+requires-python = ">=3.9"
+dependencies = [
+    "systemrdl-compiler >= 1.27, < 2",
+    "jinja2 >= 3.0",
+]
+authors = [
+    {name = "Matthew Ballance"},
+]
+description = "Generate a PSS (Portable Test and Stimulus) register package from SystemRDL"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+keywords = [
+    "SystemRDL", "PeakRDL", "PSS", "Portable Test and Stimulus",
+    "CSR", "registers", "generator",
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
+]
+
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
+docs = ["sphinx", "sphinx-book-theme", "sphinxemoji", "pygments-systemrdl"]
+dev = ["ruff", "mypy"]
+
+[project.entry-points."peakrdl.exporters"]
+pss = "peakrdl_pss.__peakrdl__:Exporter"
+
+[tool.setuptools.dynamic]
+version = {attr = "peakrdl_pss.__about__.__version__"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+peakrdl_pss = ["templates/*.pss"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "pssparser: requires the pssparser CLI",
+    "uvm: requires peakrdl-uvm",
+    "slow: long-running",
+]
+
+[tool.mypy]
+# The runtime floor is 3.9 (see requires-python); mypy no longer accepts that
+# as a target, so type-check against the oldest version it supports.
+python_version = "3.10"
+files = ["src"]
+strict = true
+# ExporterSubcommandPlugin is untyped when peakrdl is absent; subclassing it is
+# the documented plugin contract, not a typing gap on our side.
+disallow_subclassing_any = false
+
+# peakrdl is a plugin host, not a runtime dependency, so it is often absent when
+# type-checking. Configure that here rather than with inline ignores, which would
+# themselves become errors wherever peakrdl *is* installed.
+[[tool.mypy.overrides]]
+module = ["peakrdl.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+src = ["src"]
+line-length = 100
+# 3.9 is the floor, so PEP 585 / PEP 604 annotation rewrites (UP006/UP007/FA100)
+# do not apply without `from __future__ import annotations` everywhere.
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "C4"]
+# printf-style formatting is used consistently across src/ and matches the
+# surrounding PeakRDL exporters; it is a house style, not a defect.
+ignore = ["E501"]
+
+[tool.ruff.lint.per-file-ignores]
+# Test modules insert the tests/ directory on sys.path before importing helpers,
+# so their imports cannot be sorted to the top.
+"tests/**" = ["E402"]

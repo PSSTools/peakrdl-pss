@@ -1,0 +1,12 @@
+// Targets: a parameterized addrmap instantiated twice with different parameters.
+// The two instances are structurally different and must not share a type.
+addrmap params {
+    regfile bank_t #(longint unsigned N = 2) {
+        reg {
+            field {sw=rw; hw=r;} f[31:0] = 0;
+        } reg0[N] @ 0x0 += 0x4;
+    };
+
+    bank_t #(.N(2)) small @ 0x0;
+    bank_t #(.N(8)) large @ 0x100;
+};

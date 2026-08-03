@@ -1,0 +1,17 @@
+{#- Shared macros.  Every macro takes IR objects and plain scalars only; none
+    reaches back into the SystemRDL model. -#}
+
+{%- macro bit_decl(width) -%}
+{%- if width == 1 -%}bit    {%- else -%}bit[{{ width }}]{%- endif -%}
+{%- endmacro -%}
+
+{%- macro field_comment(row) -%}
+{%- if row.msb == row.lsb -%}[{{ row.msb }}]{%- else -%}[{{ row.msb }}:{{ row.lsb }}]{%- endif -%}
+{%- if row.reserved %} reserved{% else %} sw={{ row.sw }} hw={{ row.hw }}
+{%- if row.rdl_name != row.name %} rdl_name={{ row.rdl_name }}{% endif %}
+{%- if row.reset is not none %} reset=0x{{ '%x' % row.reset }}{% elif row.reset_is_ref %} reset=<reference>{% endif %}
+{%- if row.lossy_notes %} dropped: {{ row.lossy_notes|join(', ') }}{% endif %}
+{%- endif -%}
+{%- endmacro -%}
+
+{%- macro hex(value) -%}0x{{ '%x' % value }}{%- endmacro -%}

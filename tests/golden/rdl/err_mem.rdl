@@ -1,0 +1,15 @@
+// Targets: PSS-E004. A memory anywhere in the design makes the whole export fail.
+// Expectation: nonzero exit, PSS-E004 reported, no output file written.
+addrmap err_mem {
+    reg {
+        field {sw=rw; hw=r;} f[15:0] = 1234;
+    } r1 @ 0x0;
+
+    external mem {
+        reg {
+            field {sw=rw; hw=r;} f[15:0] = 1234;
+        } vr[8] @ 0x0 += 4;
+        mementries = 0x100;
+        memwidth = 32;
+    } xxx @ 0x1000;
+};

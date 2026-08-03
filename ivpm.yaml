@@ -1,0 +1,17 @@
+
+package:
+  name: peakrdl-pss
+
+  dep-sets:
+  - name: default-dev
+    deps: 
+    - name: peakrdl
+      url: https://github.com/systemrdl/peakrdl.git
+    - name: peakrdl-uvm
+      url: https://github.com/systemrdl/peakrdl-uvm.git
+    - name: pssparser
+      url: https://git.dvkit.org/psstools/pssparser.git
+    - name: pytest
+      src: pypi
+    - name: sphinx
+      src: pypi

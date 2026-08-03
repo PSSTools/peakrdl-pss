@@ -1,0 +1,12 @@
+// Targets: the performance benchmark (marked 'slow'). 64 blocks x 64 registers
+// = 4096 registers, all one type, so it also checks that dedup keeps the output
+// size proportional to the number of *types*, not instances.
+addrmap wide {
+    regfile blk_t {
+        reg r_t {
+            field {sw=rw; hw=r;} f[31:0] = 0;
+        };
+        r_t reg0[64] @ 0x0 += 0x4;
+    };
+    blk_t blk[64] @ 0x0 += 0x100;
+};
