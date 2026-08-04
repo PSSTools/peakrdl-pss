@@ -84,6 +84,10 @@ This is the **only** supported way to update an expectation. Editing a golden by
 hand to match new behavior turns a regression test into a transcript of whatever
 the code happens to do -- review the regenerated diff like any other change.
 
+Goldens record the generator version stamp as the literal ``<version>``, and the
+comparison substitutes it in. A release therefore does not touch a single
+expectation. The stamp is covered directly by ``tests/unit/test_header.py``.
+
 Adding a diagnostic
 -------------------
 

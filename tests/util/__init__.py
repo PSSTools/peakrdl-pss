@@ -24,6 +24,7 @@ from systemrdl import RDLCompiler
 from systemrdl.messages import MessagePrinter
 from systemrdl.node import AddrmapNode, RootNode
 
+from peakrdl_pss.__about__ import __version__
 from peakrdl_pss.exporter import PSSExporter
 
 TESTS_DIR = os.path.dirname(os.path.abspath(__file__ + "/.."))
@@ -31,6 +32,14 @@ RDL_DIR = os.path.join(TESTS_DIR, "golden", "rdl")
 EXPECT_DIR = os.path.join(TESTS_DIR, "golden", "expect")
 
 UPDATE_GOLDEN_ENV = "PEAKRDL_PSS_UPDATE_GOLDEN"
+
+# Every generated file stamps the generator version into its header, so without
+# this a release would rewrite all 26 expectations while changing no behaviour --
+# and a diff that large is a diff nobody reads.  The stamp itself is not left
+# untested: tests/unit/test_header.py asserts the real version reaches the
+# output.  Anchored on the "peakrdl-pss " prefix so a version that happens to be
+# a substring of an address or a width cannot be clobbered.
+VERSION_TOKEN = "<version>"
 
 
 # --- compiling -----------------------------------------------------------
@@ -156,13 +165,21 @@ def assert_parses(*paths: str) -> None:
 # --- goldens -------------------------------------------------------------
 
 
+def strip_version(text: str) -> str:
+    """Replace the generator version stamp with :data:`VERSION_TOKEN`."""
+    return text.replace("peakrdl-pss " + __version__, "peakrdl-pss " + VERSION_TOKEN)
+
+
 def assert_golden(text: str, name: str) -> None:
     """Compare *text* against ``tests/golden/expect/<name>``.
 
     Set ``PEAKRDL_PSS_UPDATE_GOLDEN=1`` to rewrite expectations after an
     intentional change; review the resulting diff like any other code change.
+
+    The comparison is version-insensitive -- see :data:`VERSION_TOKEN`.
     """
     path = os.path.join(EXPECT_DIR, name)
+    text = strip_version(text)
     if os.environ.get(UPDATE_GOLDEN_ENV):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, "w", encoding="utf-8", newline="\n") as f:

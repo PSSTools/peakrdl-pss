@@ -27,12 +27,12 @@ release mechanics).
 | M6 parser-gated | deferred | `--emit-enums=typed`, `--offset-mode=path` raise `NotImplementedError` |
 | M7 release | open | CI workflow written; packaging and changelog not finalized |
 
-**Current gate:** 473 tests pass; 95% line coverage (gate is 85%); `ruff` and
+**Current gate:** 498 tests pass; 95% line coverage (gate is 85%); `ruff` and
 `mypy --strict` clean; `sphinx-build -W` clean; all 144 parser-gate cases pass.
 
 ### What the plan got wrong, and what the corpus caught
 
-Five things were wrong in the plan or in the first implementation. Each is worth
+Six things were wrong in the plan or in the first implementation. Each is worth
 recording because each was found by a test rather than by reading:
 
 1. **`PSS-E005` cannot fire — removed.** The plan promoted "regwidth not in
@@ -64,6 +64,15 @@ recording because each was found by a test rather than by reading:
    register and thereby changing the key of `get_offset_of_instance`. Fixed by
    deferring all constants to a second pass, so **instance names always win**.
    `reset.rdl` was written to catch exactly this and did.
+6. **The goldens were version-coupled.** Every generated file stamps the
+   generator version into its header, and the goldens recorded it literally, so
+   the first version bump after CI went green (`0.1.0` → `0.0.1`, commit
+   `772c326`) failed 25 goldens in both jobs while changing no behaviour. A
+   26-file diff on a release is a diff nobody reads, and one that trains
+   reviewers to regenerate goldens without looking. Goldens now record the stamp
+   as `<version>` and `assert_golden` substitutes it in; `tests/unit/test_header.py`
+   covers the real stamp in both the package header and the sidecar, so
+   normalizing it away does not leave it untested.
 
 Three further defects were found by tests during implementation: the Jinja loader
 chain made non-overridden templates unfindable whenever `user_template_dir` was

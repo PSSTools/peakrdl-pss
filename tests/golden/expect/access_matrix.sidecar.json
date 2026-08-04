@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generator": "peakrdl-pss 0.1.0",
+  "generator": "peakrdl-pss <version>",
   "package": "access_matrix",
   "top": "access_matrix",
   "registers": [
