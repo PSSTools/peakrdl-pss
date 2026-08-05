@@ -1,6 +1,6 @@
 # PeakRDL-PSS: Implementation, Test, and Documentation Plan
 
-**Status:** M0–M5 implemented; M6 deferred (parser-gated), M7 open
+**Status:** M0–M5 and M7 implemented; M6 deferred (parser-gated). 0.0.1 released 2026-08-05
 **Date:** 2026-08-02, implementation record added 2026-08-03
 **Design input:** `docs/design/systemrdl-to-pss.md` (the "design doc" below), *including the
 `MSB:` review comments*, which are resolved here and summarized in §0.1
@@ -12,9 +12,8 @@
 
 ## Implementation record (2026-08-03)
 
-Milestones **M0 through M5 are implemented**. M6 is deferred by design (both items
-are parser-gated and both defaults are complete); M7 remains open (packaging and
-release mechanics).
+Milestones **M0 through M5 and M7 are implemented**. M6 is deferred by design
+(both items are parser-gated and both defaults are complete).
 
 | Milestone | State | Evidence |
 |---|---|---|
@@ -25,7 +24,7 @@ release mechanics).
 | M4 optional features | done | every flag in §4.7 except the two M6 modes, which refuse with a message naming the parser requirement |
 | M5 cross-check | done | offset oracle, layout oracle, signature fidelity, determinism, naming, UVM cross-check |
 | M6 parser-gated | deferred | `--emit-enums=typed`, `--offset-mode=path` raise `NotImplementedError` |
-| M7 release | open | CI workflow written; packaging and changelog not finalized |
+| M7 release | done | tag-gated `publish-pypi` job; **0.0.1 published to PyPI** on 2026-08-05 from tag `v0.0.1` |
 
 **Current gate:** 498 tests pass; 95% line coverage (gate is 85%); `ruff` and
 `mypy --strict` clean; `sphinx-build -W` clean; all 144 parser-gate cases pass.

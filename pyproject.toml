@@ -36,6 +36,12 @@ classifiers = [
 Source = "https://git.dvkit.org/psstools/peakrdl-pss.git"
 
 [project.optional-dependencies]
+# `pip install peakrdl-pss` gives the exporter but not the `peakrdl` command,
+# which is deliberate: as a plugin, this package is usually installed alongside
+# a peakrdl that is already there, and hard-depending on the CLI would drag it
+# into Python-API-only installs. peakrdl-uvm draws the same line with the same
+# extra name, so the ecosystem's `[cli]` habit works here too.
+cli = ["peakrdl-cli >= 1.2.3"]
 test = ["pytest", "pytest-cov"]
 docs = ["sphinx", "sphinx-book-theme", "sphinxemoji", "pygments-systemrdl"]
 dev = ["ruff", "mypy"]
