@@ -30,6 +30,11 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Electronic Design Automation (EDA)",
 ]
 
+[project.urls]
+# git.dvkit.org is the public read mirror; it serves the dumb HTTP protocol, so
+# it clones but does not browse in a web UI.
+Source = "https://git.dvkit.org/psstools/peakrdl-pss.git"
+
 [project.optional-dependencies]
 test = ["pytest", "pytest-cov"]
 docs = ["sphinx", "sphinx-book-theme", "sphinxemoji", "pygments-systemrdl"]
