@@ -11,6 +11,7 @@ package encode {
     // ---- encodings ----
 
     // encoding mode_e
+    // disabled
     static const bit[2] mode_e__off = 0x0;
     static const bit[2] mode_e__slow = 0x1;
     static const bit[2] mode_e__fast = 0x2;

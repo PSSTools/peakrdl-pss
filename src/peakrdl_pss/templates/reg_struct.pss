@@ -12,6 +12,10 @@
 {% endif %}
     struct {{ rt.struct_name }} : packed_s<LITTLE_ENDIAN> {
 {% for row in rt.fields %}
+{% for line in row.desc|desc_lines %}
+        //{% if line %} {{ line }}{% endif %}
+
+{% endfor %}
         {{ u.bit_decl(row.width) }} {{ row.name }};{{ ' ' }}// {{ u.field_comment(row) }}
 {% endfor %}
     }

@@ -7,5 +7,9 @@
 {% import "utils.pss" as u %}
     // encoding {{ et.rdl_name }}
 {% for m in et.members %}
+{% for line in m.desc|desc_lines %}
+    //{% if line %} {{ line }}{% endif %}
+
+{% endfor %}
     static const bit[{{ et.width }}] {{ et.name }}__{{ m.name }} = {{ u.hex(m.value) }};
 {% endfor %}

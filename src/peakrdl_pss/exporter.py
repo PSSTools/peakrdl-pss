@@ -14,6 +14,7 @@ import jinja2 as jj
 from systemrdl.node import AddrmapNode, Node, RootNode
 
 from . import addressing
+from .prose import desc_inline, desc_lines
 from .__about__ import __version__
 from .design import DesignScanner
 from .diagnostics import Finding, PSSExportError, Severity
@@ -57,6 +58,10 @@ class PSSExporter:
             lstrip_blocks=True,
             keep_trailing_newline=True,
         )
+        # Reflowing a `desc` is presentation, so it lives here rather than in
+        # the IR: the IR carries the property's text as the model states it.
+        self.jj_env.filters["desc_lines"] = desc_lines
+        self.jj_env.filters["desc_inline"] = desc_inline
 
     # -- public API -------------------------------------------------------
 
