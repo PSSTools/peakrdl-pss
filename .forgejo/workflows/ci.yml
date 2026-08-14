@@ -47,6 +47,22 @@ jobs:
         fi
         echo "OK: no internal identifiers in tracked files"
 
+    - name: Stamp build version
+      # Tag builds keep the clean version; everything else gets a .dev<run-id>
+      # suffix, so a wheel built from an ordinary push can never be mistaken for
+      # a release -- on PyPI a version can be yanked but never reused.
+      #
+      # pssparser stamps a bare ".<run-id>", which under PEP 440 sorts *after*
+      # the release it was built from. ".dev<run-id>" sorts before it, which is
+      # what a pre-release build should do if one is ever installed by hand.
+      run: |
+        case "$GITHUB_REF" in
+          refs/tags/*) echo "tag build -- leaving version clean" ;;
+          *) sed -i 's/^__version__ = "\(.*\)"$/__version__ = "\1.dev'"$GITHUB_RUN_ID"'"/' \
+               src/peakrdl_pss/__about__.py ;;
+        esac
+        grep '^__version__' src/peakrdl_pss/__about__.py
+
     - name: Lint and type-check
       # One interpreter is enough: ruff and mypy are configured for the 3.9
       # floor regardless of which interpreter runs them.
@@ -95,6 +111,37 @@ jobs:
       with:
         name: docs-html
         path: docs/_build/html
+        if-no-files-found: error
+
+    - name: Build the distribution
+      # Built here rather than in the publish job so that every push exercises
+      # the packaging path. A release that first builds a wheel on the tag is a
+      # release whose packaging has never been tested.
+      run: |
+        P=/opt/python/cp312-cp312/bin/python
+        $P -m venv /tmp/buildenv
+        /tmp/buildenv/bin/pip install -q build
+        /tmp/buildenv/bin/python -m build --outdir dist
+        ls -la dist/
+
+    - name: Check the distribution installs and runs from the wheel
+      # Installing the built wheel, not the source tree: this catches a missing
+      # package-data entry, which is invisible to an editable install and would
+      # otherwise ship a plugin with no templates.
+      run: |
+        P=/opt/python/cp312-cp312/bin/python
+        $P -m venv /tmp/wheeltest
+        /tmp/wheeltest/bin/pip install -q dist/*.whl peakrdl
+        /tmp/wheeltest/bin/peakrdl pss --help > /dev/null
+        /tmp/wheeltest/bin/peakrdl pss tests/golden/rdl/basic.rdl -o /tmp/wheel-out.pss
+        grep -q "^package " /tmp/wheel-out.pss
+        echo "OK: the wheel exports a package"
+
+    - name: Upload the distribution
+      uses: forgejo/upload-artifact@v4
+      with:
+        name: dist
+        path: dist
         if-no-files-found: error
 
   parser-gate:
@@ -193,3 +240,64 @@ jobs:
           echo "::error::a generated package is not accepted by pssparser"
           exit 1
         fi
+
+  publish-pypi:
+    # Releases only. A tag is the deliberate act; ordinary pushes produce
+    # dev-suffixed wheels that must never reach PyPI, because a version number
+    # there can be yanked but never reused.
+    #
+    # `needs` includes parser-gate: the whole premise of this project is that
+    # its output is accepted by a PSS parser, so a release that skipped that
+    # check would be a release of the one thing we promise not to ship.
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [test, parser-gate]
+    runs-on: ubuntu-latest
+    container:
+      image: dvkit/pssparser-ci:manylinux_2_28-x86_64
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download the distribution
+      uses: forgejo/download-artifact@v4
+      with:
+        name: dist
+        path: dist
+
+    - name: Check the tag matches the package version
+      # Guards against tagging v0.1.0 while __about__.py still says 0.0.1 --
+      # which would publish a release under the wrong number, unfixably.
+      run: |
+        tag="${GITHUB_REF#refs/tags/v}"
+        ver=$(grep '^__version__ = ' src/peakrdl_pss/__about__.py | sed 's/.*"\(.*\)".*/\1/')
+        echo "tag=$tag  __version__=$ver"
+        if [ "$tag" != "$ver" ]; then
+          echo "::error::tag v$tag does not match __version__ $ver in src/peakrdl_pss/__about__.py"
+          exit 1
+        fi
+        # PyPI normalizes '-' to '_' in filenames, so the wheel is peakrdl_pss-.
+        for f in dist/*; do
+          case "$(basename "$f")" in
+            peakrdl_pss-${ver}-*.whl|peakrdl_pss-${ver}.tar.gz) ;;
+            *) echo "::error::$(basename "$f") is not version ${ver}"; exit 1 ;;
+          esac
+        done
+        echo "OK: tag, source version and all artifacts agree on ${ver}"
+
+    - name: Publish to PyPI
+      # Plain twine rather than a third-party action: this is the release path,
+      # and it should not depend on GitHub being reachable.
+      env:
+        TWINE_USERNAME: __token__
+        TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+      run: |
+        if [ -z "$TWINE_PASSWORD" ]; then
+          echo "::error::PYPI_API_TOKEN is not set for this repository"
+          exit 1
+        fi
+        P=/opt/python/cp312-cp312/bin/python
+        $P -m venv /tmp/twine
+        /tmp/twine/bin/pip install -q twine
+        /tmp/twine/bin/twine check dist/*
+        /tmp/twine/bin/twine upload --non-interactive --skip-existing dist/*
+        echo "published $(ls dist/* | wc -l) artifacts"

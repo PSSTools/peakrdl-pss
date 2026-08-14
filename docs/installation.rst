@@ -19,7 +19,12 @@ Requirements
 * ``jinja2`` 3.0 or newer
 
 ``peakrdl`` itself is **not** a runtime dependency. The exporter is usable
-directly from Python without the CLI installed -- see :doc:`api`.
+directly from Python without the CLI installed -- see :doc:`api`. If you want
+the CLI pulled in as well:
+
+.. code-block:: bash
+
+    python3 -m pip install "peakrdl-pss[cli]"
 
 Consuming the output
 --------------------
