@@ -14,12 +14,12 @@ import jinja2 as jj
 from systemrdl.node import AddrmapNode, Node, RootNode
 
 from . import addressing
-from .prose import desc_inline, desc_lines
 from .__about__ import __version__
 from .design import DesignScanner
 from .diagnostics import Finding, PSSExportError, Severity
 from .ir import ChildRef, Design, GroupType
 from .options import ExportOptions
+from .prose import desc_inline, desc_lines
 from .validate import Validator
 
 __all__ = ["PSSExporter", "PSSExportError"]

@@ -35,7 +35,7 @@ def test_a_field_desc_becomes_a_comment_above_its_member(tmp_path):
             } csr @ 0x0;
         };
     """)
-    lines = [l.strip() for l in text.split("\n")]
+    lines = [line.strip() for line in text.split("\n")]
     i = lines.index("// Channel enable.")
     assert lines[i + 1].startswith("bit ch_en;")
 
@@ -54,7 +54,7 @@ def test_the_layout_facts_stay_beside_the_member(tmp_path):
             } csr @ 0x0;
         };
     """)
-    decl = next(l for l in text.split("\n") if "bit ch_en;" in l)
+    decl = next(line for line in text.split("\n") if "bit ch_en;" in line)
     assert "// [0] sw=rw hw=r" in decl
     assert "Channel enable." not in decl
 
@@ -67,7 +67,7 @@ def test_a_field_without_a_desc_is_unchanged(tmp_path):
             } csr @ 0x0;
         };
     """)
-    decl = [l for l in text.split("\n") if "bit ch_en;" in l]
+    decl = [line for line in text.split("\n") if "bit ch_en;" in line]
     assert len(decl) == 1
     idx = text.split("\n").index(decl[0])
     assert "//" not in text.split("\n")[idx - 1] or "struct" in text.split("\n")[idx - 1]
@@ -82,7 +82,7 @@ def test_an_enum_member_desc_becomes_a_comment(tmp_path):
             } csr @ 0x0;
         };
     """)
-    lines = [l.strip() for l in text.split("\n")]
+    lines = [line.strip() for line in text.split("\n")]
     i = lines.index("// disabled")
     assert lines[i + 1].startswith("static const")
     assert "mode_e__off" in lines[i + 1]
@@ -113,7 +113,7 @@ def test_a_paragraph_break_survives():
 def test_long_text_wraps_to_the_requested_width():
     out = desc_lines("word " * 40, width=30)
     assert len(out) > 1
-    assert all(len(l) <= 30 for l in out)
+    assert all(len(line) <= 30 for line in out)
 
 
 def test_a_missing_or_blank_desc_yields_nothing():

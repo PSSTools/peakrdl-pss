@@ -15,6 +15,11 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from util import rdl_path, run_pssparser  # noqa: E402
 
+# These shell out to `python -m peakrdl`, so an absent CLI fails them on the
+# exit code rather than skipping -- which reports a missing optional tool as a
+# broken package. Guarded for the same reason as test_cli_parity.py.
+pytest.importorskip("peakrdl", reason="peakrdl-cli not installed")
+
 
 def peakrdl(*args, cwd=None):
     return subprocess.run(

@@ -12,7 +12,15 @@ import inspect
 import os
 import sys
 
+import pytest
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+# peakrdl is a plugin host, not a runtime dependency (see the [cli] extra), so
+# it is often absent -- and __peakrdl__ imports it at module scope, which makes
+# this a collection error rather than a skip unless it is guarded here. The
+# cli-gate job is what stops that skip from becoming permanent.
+pytest.importorskip("peakrdl.plugins.exporter", reason="peakrdl-cli not installed")
 
 from peakrdl_pss.__peakrdl__ import Exporter  # noqa: E402
 from peakrdl_pss.exporter import PSSExporter  # noqa: E402
