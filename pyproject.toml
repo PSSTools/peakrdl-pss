@@ -7,7 +7,9 @@ name = "peakrdl-pss"
 dynamic = ["version"]
 requires-python = ">=3.9"
 dependencies = [
-    "systemrdl-compiler >= 1.27, < 2",
+    # 1.30 is where RegNode.is_msb0_order lands; layout.build_rows() reads it
+    # unconditionally, so anything older raises AttributeError on every register.
+    "systemrdl-compiler >= 1.30, < 2",
     "jinja2 >= 3.0",
 ]
 authors = [

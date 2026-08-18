@@ -32,7 +32,7 @@ jobs:
       - run: python -m pip install -e ".[test]"
       - name: Pin the minimum supported systemrdl-compiler
         if: matrix.systemrdl == 'min'
-        run: python -m pip install "systemrdl-compiler==1.27.*"
+        run: python -m pip install "systemrdl-compiler==1.30.*"
       # pssparser and peakrdl-uvm are absent here, so their suites skip. The
       # parser-gate job below is what makes the parser a hard requirement --
       # keeping them separate means a missing tool cannot silently downgrade

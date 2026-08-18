@@ -262,7 +262,7 @@ The pipeline becomes: **compile → scan (build IR) → validate (IR) → render
 ### 3.1 `pyproject.toml`
 
 * build backend: `setuptools>=64`, `src` layout, version read from `__about__.py`.
-* runtime deps: `systemrdl-compiler>=1.27,<2`, `jinja2>=3.0`.
+* runtime deps: `systemrdl-compiler>=1.30,<2`, `jinja2>=3.0`.
 * `[project.optional-dependencies]`: `test = [pytest, pytest-cov]`, `docs = [sphinx,
   sphinx-book-theme, sphinxemoji, pygments-systemrdl]`, `dev = [ruff, mypy]`.
 * `peakrdl` itself is **not** a runtime dep (matching `peakrdl-uvm`) — the plugin module
