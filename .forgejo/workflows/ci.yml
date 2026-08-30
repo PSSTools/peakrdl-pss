@@ -241,6 +241,52 @@ jobs:
           exit 1
         fi
 
+  gate:
+    # Release master switch (plan §0.5.4, design §9.7). Added 2026-08-30.
+    #
+    # This repo's release path was CORRECT before this job existed, but for the
+    # wrong reason: it published only from Forgejo because there is no GitHub
+    # publish job at all, not because anything consulted the switch. So
+    # sync-policy.toml could be flipped to authority = "github" and the JSON
+    # would change while nothing on disk did -- leaving the policy file
+    # asserting something untrue. Behaviour right, mechanism wrong; the
+    # reference set has to be uniform or the templates copy the wrong shape.
+    #
+    # ONE file, above both platforms, decides who releases:
+    #   https://dvkit.org/.well-known/release-authority.json
+    # The runner only READS it, over plain HTTPS with no credential: a workflow
+    # file is public and editable by anyone who can push.
+    #
+    # `if:` on a job cannot reference a step in its own job, so the switch is
+    # resolved here and consumed through needs.gate.outputs.authority.
+    runs-on: ubuntu-latest
+    outputs:
+      authority: ${{ steps.resolve.outputs.authority }}
+    steps:
+      - id: resolve
+        # One line on purpose: a multi-line `python3 -c` has to start at column
+        # 0, which terminates the YAML block scalar and silently corrupts the
+        # workflow.
+        run: |
+          url=https://dvkit.org/.well-known/release-authority.json
+          if ! body=$(curl -fsS --max-time 10 "$url"); then
+            # DECIDED 2026-08-30: fail CLOSED. A release blocked by a dvkit.org
+            # outage is recoverable; a release published twice from two forges
+            # is not. Quiet on a non-tag ref, where nothing was due anyway.
+            case "$GITHUB_REF" in
+              refs/tags/v*)
+                echo "::error::release-authority switch unreachable; refusing to publish"
+                exit 1 ;;
+              *)
+                echo "authority=none" >> "$GITHUB_OUTPUT"
+                echo "switch unreachable on a non-tag ref; nothing to release"
+                exit 0 ;;
+            esac
+          fi
+          auth=$(printf '%s' "$body" | python3 -c 'import json,os,sys; d=json.load(sys.stdin); r=os.environ["GITHUB_REPOSITORY"]; print(d["repos"].get(r) or d["orgs"].get(r.split("/")[0]) or d["default"])')
+          echo "release authority for $GITHUB_REPOSITORY: $auth"
+          echo "authority=$auth" >> "$GITHUB_OUTPUT"
+
   publish-pypi:
     # Releases only. A tag is the deliberate act; ordinary pushes produce
     # dev-suffixed wheels that must never reach PyPI, because a version number
@@ -249,8 +295,8 @@ jobs:
     # `needs` includes parser-gate: the whole premise of this project is that
     # its output is accepted by a PSS parser, so a release that skipped that
     # check would be a release of the one thing we promise not to ship.
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: [test, parser-gate]
+    if: startsWith(github.ref, 'refs/tags/v') && needs.gate.outputs.authority == 'forgejo'
+    needs: [gate, test, parser-gate]
     runs-on: ubuntu-latest
     container:
       image: dvkit/pssparser-ci:manylinux_2_28-x86_64
