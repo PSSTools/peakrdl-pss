@@ -95,3 +95,20 @@ def test_rows_cover_requires_starting_at_bit_zero():
 
 def test_rows_cover_accepts_empty():
     assert layout.rows_cover([])
+
+
+def test_singlepulse_is_lossy_only_when_software_can_read_it(tmp_path):
+    """A write-only pulse (an interrupt acknowledge in a command register)
+    drops nothing software can see; a readable one does."""
+    from util import compile_text
+
+    root = compile_text("""
+        addrmap m {
+            reg {
+                field { sw = w;  hw = r; singlepulse; } wo_pulse[0:0] = 0;
+                field { sw = rw; hw = r; singlepulse; } rw_pulse[1:1] = 0;
+            } cmd @ 0x0;
+        };""", tmp_path)
+    fields = {f.inst_name: f for f in root.top.get_child_by_name("cmd").fields()}
+    assert access.lossiness(fields["wo_pulse"]) == []
+    assert access.lossiness(fields["rw_pulse"]) == ["singlepulse"]

@@ -78,6 +78,10 @@ def lossiness(field: "FieldNode") -> List[str]:
 
     for prop in ("singlepulse", "swmod", "swacc", "counter", "intr"):
         if field.get_property(prop, default=False):
+            # A pulse software cannot read back (sw=w) loses nothing: the
+            # write is the whole of what software sees, here as in RDL.
+            if prop == "singlepulse" and not field.is_sw_readable:
+                continue
             notes.append(prop)
 
     for prop in ("incr", "decr", "enable", "mask", "haltmask", "next", "precedence"):

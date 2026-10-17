@@ -59,7 +59,10 @@ collapse to the nearest value and raise :ref:`pss-w102`.
 Side-effect properties -- ``onread``, ``onwrite``, ``singlepulse``, ``swmod``,
 ``swacc``, counters, interrupts -- have **no PSS representation at all**. They
 are preserved as a comment on the field, reported as :ref:`pss-w101`, and
-recorded in the :ref:`sidecar`:
+recorded in the :ref:`sidecar`. The one exception is ``singlepulse`` on a field
+software cannot read (``sw=w``, such as an interrupt acknowledge in a command
+register): the write is all software ever sees of it, so nothing is dropped and
+nothing is reported.
 
 .. code-block:: text
 

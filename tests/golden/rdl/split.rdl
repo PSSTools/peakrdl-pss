@@ -1,0 +1,41 @@
+// Split registers (SystemRDL 10.1-h): a read-only and a write-only register
+// at one offset, as in the OpenCores I2C core -- TXR/RXR share a data
+// offset, CR/SR a command/status offset. Also a write-only register alone at
+// its offset (reads 0) and a read-only one alone (stays RW in fw-hdl).
+
+addrmap split {
+    name = "Split register map";
+
+    reg {
+        field { sw = rw; hw = r; } prer[15:0] = 16'hFFFF;
+    } prer @ 0x0;
+
+    reg {
+        field { sw = w; hw = r; } txd[7:0];
+    } txr @ 0x4;
+
+    reg {
+        field { sw = r; hw = w; } rxd[7:0];
+    } rxr @ 0x4;
+
+    reg {
+        field { sw = w; hw = r; hwclr; } sta[7:7] = 1'b0;
+        field { sw = w; hw = r; hwclr; } sto[6:6] = 1'b0;
+        field { sw = w; hw = r; singlepulse; } iack[0:0] = 1'b0;
+    } cr @ 0x8;
+
+    reg {
+        field { sw = r; hw = w; } rxack[7:7];
+        field { sw = r; hw = w; } busy[6:6];
+        field { sw = r; hw = w; } tip[1:1];
+        field { sw = r; hw = w; } iflag[0:0];
+    } sr @ 0x8;
+
+    reg {
+        field { sw = w; hw = r; } key[31:0];
+    } unlock @ 0xC;
+
+    reg {
+        field { sw = r; hw = w; } id[31:0] = 32'h0012_C0DE;
+    } ident @ 0x10;
+};
